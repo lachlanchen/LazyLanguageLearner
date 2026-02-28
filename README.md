@@ -1,7 +1,9 @@
 [English](README.md) · [العربية](i18n/README.ar.md) · [Español](i18n/README.es.md) · [Français](i18n/README.fr.md) · [日本語](i18n/README.ja.md) · [한국어](i18n/README.ko.md) · [Tiếng Việt](i18n/README.vi.md) · [中文 (简体)](i18n/README.zh-Hans.md) · [中文（繁體）](i18n/README.zh-Hant.md) · [Deutsch](i18n/README.de.md) · [Русский](i18n/README.ru.md)
 
-# lazylanguagelearner
 
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
+
+# LazyLanguageLearner
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
@@ -9,27 +11,38 @@
 ![Web](https://img.shields.io/badge/Web-Tornado-5C2D91?logo=tornado)
 ![AI](https://img.shields.io/badge/OpenAI-API-10A37F?logo=openai&logoColor=white)
 
-Learn language in a lazy way.
+| Attribute | Value |
+|---|---|
+| Type | Script-driven multilingual language learning pipeline |
+| Runtime | Python CLI + Tornado web app |
+| Main source | Rosetta Stone course PDFs |
+| Storage | Local CSV + JSON cache files |
+| Default port | `7788` |
+
+LazyLanguageLearner is a script-driven Python workflow for turning language-course PDFs into reusable multilingual learning data and rendering it in a minimal web UI.
 
 ## 🌍 Overview
 
-LazyLanguageLearner is a Python-based language-learning workflow that combines:
+The repository combines content extraction, transformation, and serving:
 
-- PDF acquisition for Rosetta Stone course-content documents.
-- PDF parsing and sentence extraction into CSV datasets.
-- OpenAI-powered multilingual sentence conversion with phonetic pairs and local disk caching.
-- A lightweight Tornado web app that renders multilingual text with ruby phonetic annotations.
+| Step | Purpose |
+|---|---|
+| 1 | Download Rosetta Stone course-content PDFs from links embedded in `rs_html.py`. |
+| 2 | Parse PDFs into sentence-level CSV rows for transformation. |
+| 3 | Generate multilingual/phonetic variants through OpenAI with on-disk caching. |
+| 4 | Render the structured sentences in a Tornado web UI with phonetic annotations. |
 
-The current repository is script-driven (not packaged as a pip module yet), with data files and notebooks included directly in the repo.
+This project is intentionally lightweight and root-centric: scripts are designed to be run directly from the repository root rather than as an installed package.
 
 ## ✨ Features
 
-- Downloads language course PDFs from links embedded in `rs_html.py` (`download_course_text.py`).
-- Extracts section/sentence data from PDFs into structured CSV (`pdf_to_csv.py`, `language_extraction.py`).
-- Caches OpenAI prompt/response data into `cache/*.json` to reduce repeated API usage (`openai_request.py`).
-- Parses AI responses into JSON with retry logic and custom JSON parsing errors.
-- Serves multilingual sentence blocks from `translations.json` through Tornado (`app.py` + `templates/index.html`).
-- Includes Japanese phonetic normalization (`katakana` to `hiragana`) before rendering.
+- **Automated download workflow** from embedded links in `rs_html.py` using `download_course_text.py`.
+- **Regex + PDF extraction pipeline** for section/sentence extraction in `pdf_to_csv.py`.
+- **Selective extraction utilities** for level, section, page, and sentence inspection in `language_extraction.py`.
+- **OpenAI request layer** (`openai_request.py`) with cache lookups, prompt handling, and basic JSON extraction retries.
+- **Cross-language rendering pipeline** served by `app.py` and `templates/index.html`.
+- **Japanese phonetic normalization** converting katakana data to hiragana before rendering.
+- **On-disk caching** under `cache/` for generated translation requests and responses.
 
 ## 🗂️ Project Structure
 
@@ -54,39 +67,45 @@ The current repository is script-driven (not packaged as a pip module yet), with
 ├── cache/
 │   └── *.json
 ├── i18n/
-│   └── (currently empty)
+│   └── README.*.md
 └── *.ipynb
 ```
 
 ## ✅ Prerequisites
 
-Assumptions (because no lockfile or dependency manifest is currently committed):
+- Python `3.10+`
+- `pip` with an active virtual environment (`venv` recommended)
+- An OpenAI API key (`OPENAI_API_KEY`) when using AI-powered generation
+- A working internet connection for PDF downloads and OpenAI requests
 
-- Python 3.10+ (likely works on nearby versions; exact tested matrix is not declared).
-- `pip` and `venv`.
-- OpenAI API key for model-backed scripts.
-
-Inferred Python dependencies from imports:
+Because there is no lockfile in this repo, dependencies are inferred from imports and previous content:
 
 | Package | Used by |
 |---|---|
-| `tornado` | Web server in `app.py` |
-| `openai` | API calls in `openai_request.py` |
-| `PyPDF2` | PDF parsing in extraction scripts |
-| `requests` | PDF downloads in `download_course_text.py` |
-| `beautifulsoup4` | HTML parsing in downloader |
+| `tornado` | `app.py` |
+| `openai` | `openai_request.py`, `multilingual_sentence.py` |
+| `PyPDF2` | `pdf_to_csv.py`, `language_extraction.py` |
+| `requests` | `download_course_text.py` |
+| `beautifulsoup4` | `download_course_text.py` |
 
 ## 🛠️ Installation
 
 ```bash
-# from repository root
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install tornado openai PyPDF2 requests beautifulsoup4
 ```
 
+| Setup hint | Command |
+|---|---|
+| Activate venv | `source .venv/bin/activate` |
+| Reproduce env | `pip install tornado openai PyPDF2 requests beautifulsoup4` |
+| Run checks | `python -m pip check` |
+
 ## 🚀 Usage
+
+Run scripts in this order for the standard pipeline:
 
 ### 1) Download source PDFs
 
@@ -94,80 +113,85 @@ pip install tornado openai PyPDF2 requests beautifulsoup4
 python download_course_text.py
 ```
 
-This creates `downloaded_pdfs/` and saves language/unit PDFs there.
+Downloads PDFs into `downloaded_pdfs/`.
 
-### 2) Extract Japanese PDF content to CSV
+### 2) Extract PDF content to CSV
 
 ```bash
 python pdf_to_csv.py
 ```
 
-Default output from current script: `japanese_language_data.csv`.
+Outputs `japanese_language_data.csv` by default.
 
-### 3) (Optional) Slice section/page/sentence text interactively
+### 3) Inspect a specific PDF slice (optional)
 
 ```bash
 python language_extraction.py
 ```
 
-The script contains editable example variables (`level`, `section`, `sentence_num`) and prints extracted text.
+Useful for validating specific `level`, `section`, `page`, and `sentence_num` paths before generating broader datasets.
 
-### 4) Generate multilingual JSON using OpenAI flow
+### 4) Build multilingual sentence payloads (optional)
 
 ```bash
 python multilingual_sentence.py
 ```
 
-Current behavior notes:
+Current behavior notes for reliability:
 
-- Only first CSV row is processed (`break` in loop).
-- Script currently references an undefined variable (`japanese_text`) in prompt creation, so it needs a small fix before reliable use.
+- The current version processes only the first row due to an early `break`.
+- Prompt generation references `japanese_text`, which currently appears inconsistent with the extracted CSV row variable and may fail.
 
-### 5) Run the web app
+### 5) Start the web app
 
 ```bash
 python app.py
 ```
 
-- Tornado listens on port `7788`.
-- Open in browser: `http://localhost:7788/`.
-- Note: startup log currently prints `http://localhost:8888` even though binding is `7788`.
+- Default Tornado port: `7788`
+- URL: `http://localhost:7788/`
+- Known mismatch to verify in logs: the startup print message currently references `http://localhost:8888`.
 
 ## ⚙️ Configuration
 
-Environment variables:
+Environment variables expected by the runtime scripts:
 
-| Variable | Required | Purpose | Current default |
+| Variable | Required | Purpose | Default |
 |---|---|---|---|
-| `OPENAI_API_KEY` | Yes | Required by `OpenAI()` client initialization | N/A |
-| `OPENAI_MODEL` | No | Optional override for chat model | `gpt-4-0125-preview` |
+| `OPENAI_API_KEY` | Yes (AI flow only) | OpenAI authentication | N/A |
+| `OPENAI_MODEL` | No | Model override in requests | `gpt-4-0125-preview` |
 
 Runtime files/directories:
 
-- `downloaded_pdfs/`: created by downloader, used by extraction scripts.
-- `cache/`: request/response cache for OpenAI calls.
-- `translations.json`: data source for Tornado UI rendering.
+- `downloaded_pdfs/` — populated by `download_course_text.py`.
+- `cache/` — stores cached OpenAI prompt/response payloads.
+- `translations.json` — consumed by the Tornado UI.
+- `templates/index.html` — browser rendering template.
 
-## 🧾 Data Format Examples
+Assumptions:
 
-### CSV (`japanese_language_data.csv`)
+- The repository root is the intended working directory for all scripts.
+- Translation cache can be regenerated safely if stale or missing.
 
-Header used by `pdf_to_csv.py`:
+## 🧾 Examples
+
+### CSV format (`japanese_language_data.csv`)
 
 ```csv
 Level,Unit,Section,Sentence No.,Content
 ```
 
-### JSON (`translations.json`)
-
-The web UI expects language keys with `pairs` entries containing `part` and `phonetic`:
+### OpenAI translation payload shape (`translations.json`)
 
 ```json
 {
   "ja": {
     "full": "...",
     "pairs": [
-      { "part": "日", "phonetic": "ひ" }
+      {
+        "part": "日",
+        "phonetic": "ひ"
+      }
     ]
   },
   "en": { "full": "...", "pairs": [] },
@@ -177,32 +201,41 @@ The web UI expects language keys with `pairs` entries containing `part` and `pho
 }
 ```
 
+### Minimal quick check
+
+```bash
+python app.py
+python - <<'PY'
+import json
+with open('translations.json', encoding='utf-8') as f:
+    print('Loaded', len(json.load(f)), 'language keys')
+PY
+```
+
 ## 🧪 Development Notes
 
-- This repo currently has no `requirements.txt`, `pyproject.toml`, or CI workflow.
-- Scripts are designed for direct execution from repository root.
-- Existing notebooks (`*.ipynb`) appear exploratory/prototyping-oriented.
-- Large CSV artifacts are versioned directly in Git.
-- `i18n/` exists and is ready for translated README variants.
+- The project is not packaged (`requirements.txt`, `pyproject.toml`, and CI not present).
+- Scripts are script-first and meant to be edited and rerun during iteration.
+- Notebook files appear exploratory and should be treated as research aids, not production pipelines.
+- `i18n/README.*.md` already exists for multilingual documentation, with the top-level language nav block in this file acting as the shared entry point.
 
 ## 🩺 Troubleshooting
 
-- `ModuleNotFoundError`: install inferred dependencies in the active virtual environment.
-- `OPENAI` auth errors: ensure `OPENAI_API_KEY` is exported in the shell.
-- `FileNotFoundError: downloaded_pdfs`: run `python download_course_text.py` first.
-- `multilingual_sentence.py` failure on `japanese_text`: replace `japanese_text` with `content` in prompt construction.
-- App port confusion: use `http://localhost:7788/` unless `app.listen(...)` is changed.
+- `ModuleNotFoundError`: install all required packages in the active virtual environment.
+- `OPENAI` auth error / empty responses: check that `OPENAI_API_KEY` is exported in your shell.
+- `FileNotFoundError` for `downloaded_pdfs`: run `python download_course_text.py` first.
+- OpenAI conversion issues: inspect `cache/*.json` and verify input payload format expected by `multilingual_sentence.py`.
+- App URL confusion: browse `http://localhost:7788/` after launch.
 
 ## 🛣️ Roadmap
 
-Potential next steps for the project:
-
-- Add dependency manifest (`requirements.txt` or `pyproject.toml`).
-- Fix `multilingual_sentence.py` prompt variable and remove one-row `break` for batch processing.
-- Align Tornado startup print URL with bound port.
-- Add tests for PDF extraction regex behavior and JSON parsing/retry logic.
-- Add CLI arguments for language/level/paths to reduce in-file edits.
-- Populate `i18n/` with translated README files.
+- Add a dependency manifest (`requirements.txt` or `pyproject.toml`) for reproducible installs.
+- Remove the one-row `break` from `multilingual_sentence.py` and support full-batch multilingual generation.
+- Fix prompt variable usage in `multilingual_sentence.py` and add output validation.
+- Correct Tornado startup URL log to reflect port `7788`.
+- Add CLI flags (language, level, source paths, output path).
+- Introduce lightweight tests for extraction, retry/parse logic, and JSON schema validation.
+- Expand contributor-facing docs in `i18n` language variants.
 
 ## 🤝 Contributing
 
@@ -210,15 +243,21 @@ Contributions are welcome.
 
 1. Fork the repository.
 2. Create a feature branch.
-3. Make focused changes with clear commit messages.
-4. Open a pull request describing what changed and why.
+3. Make a focused change and keep script workflows easy to reproduce.
+4. Open a pull request with clear rationale and before/after behavior notes.
 
-If you modify extraction logic, include sample input/output snippets to make review easier.
+If you update extraction logic, include sample inputs and outputs in your PR description.
 
 ## 🙏 Acknowledgements
 
-- Rosetta Stone course-content links are embedded in `rs_html.py` and used as source references for PDF downloads.
-- OpenAI API is used for multilingual generation and phonetic structuring.
+- Rosetta Stone course-content links in `rs_html.py` are the source of downloadable PDF corpus references.
+- OpenAI APIs are used for multilingual generation and phonetic annotation experiments.
+
+## ❤️ Support
+
+| Donate | PayPal | Stripe |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
 
 ## 📄 License
 

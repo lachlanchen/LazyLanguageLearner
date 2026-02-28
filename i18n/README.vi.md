@@ -1,37 +1,48 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
-# lazylanguagelearner
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
-Tùy chọn ngôn ngữ: **Tiếng Anh** | Các bản dịch README khác được lên kế hoạch trong [`i18n/`](i18n/)
+# LazyLanguageLearner
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Script--Driven-orange)
 ![Web](https://img.shields.io/badge/Web-Tornado-5C2D91?logo=tornado)
 ![AI](https://img.shields.io/badge/OpenAI-API-10A37F?logo=openai&logoColor=white)
 
-Học ngôn ngữ theo cách lười.
+| Thuộc tính | Giá trị |
+|---|---|
+| Kiểu | Quy trình học ngôn ngữ đa ngôn ngữ do script điều phối |
+| Runtime | Python CLI + ứng dụng web Tornado |
+| Nguồn chính | PDF khóa học Rosetta Stone |
+| Lưu trữ | CSV cục bộ + tệp cache JSON |
+| Cổng mặc định | `7788` |
+
+LazyLanguageLearner là một quy trình làm việc Python theo kiểu script-driven để chuyển đổi PDF khóa học ngôn ngữ thành dữ liệu học đa ngôn ngữ có thể dùng lại, sau đó hiển thị trong giao diện web tối giản.
 
 ## 🌍 Tổng quan
 
-LazyLanguageLearner là một quy trình học ngôn ngữ dựa trên Python, kết hợp:
+Kho này kết hợp ba giai đoạn trích xuất nội dung, biến đổi và phục vụ:
 
-- Thu thập PDF cho các tài liệu nội dung khóa học Rosetta Stone.
-- Phân tích PDF và trích xuất câu thành bộ dữ liệu CSV.
-- Chuyển đổi câu đa ngôn ngữ bằng OpenAI, kèm cặp ngữ âm và bộ nhớ đệm cục bộ trên đĩa.
-- Ứng dụng web Tornado gọn nhẹ để hiển thị văn bản đa ngôn ngữ với chú âm kiểu ruby.
+| Bước | Mục đích |
+|---|---|
+| 1 | Tải các PDF nội dung khóa học Rosetta Stone từ các liên kết nhúng trong `rs_html.py`. |
+| 2 | Phân tích PDF thành các hàng CSV ở cấp độ câu. |
+| 3 | Tạo các biến thể đa ngôn ngữ/chữ phiên âm thông qua OpenAI và lưu cache trên đĩa. |
+| 4 | Render các câu đã cấu trúc trong giao diện web Tornado với chú thích phiên âm. |
 
-Kho lưu trữ hiện tại vận hành theo kiểu script (chưa được đóng gói thành module pip), với các tệp dữ liệu và notebook được đưa trực tiếp vào repo.
+Dự án này được thiết kế nhẹ nhàng và tập trung ở root: các script được chạy trực tiếp từ thư mục gốc của repo thay vì đóng gói thành package.
 
 ## ✨ Tính năng
 
-- Tải PDF khóa học ngôn ngữ từ các liên kết được nhúng trong `rs_html.py` (`download_course_text.py`).
-- Trích xuất dữ liệu phần/câu từ PDF thành CSV có cấu trúc (`pdf_to_csv.py`, `language_extraction.py`).
-- Lưu đệm dữ liệu prompt/response của OpenAI vào `cache/*.json` để giảm gọi API lặp lại (`openai_request.py`).
-- Phân tích phản hồi AI thành JSON với logic thử lại và lỗi phân tích JSON tùy chỉnh.
-- Phục vụ các khối câu đa ngôn ngữ từ `translations.json` qua Tornado (`app.py` + `templates/index.html`).
-- Bao gồm chuẩn hóa ngữ âm tiếng Nhật (`katakana` sang `hiragana`) trước khi hiển thị.
+- **Luồng tải xuống tự động** từ các liên kết nhúng trong `rs_html.py` bằng `download_course_text.py`.
+- **Pipeline trích xuất bằng regex + PDF** cho phần/đoạn/văn bản câu trong `pdf_to_csv.py`.
+- **Công cụ trích xuất chọn lọc** cho mức độ, phần, trang và kiểm tra câu trong `language_extraction.py`.
+- **Lớp gọi OpenAI** (`openai_request.py`) với cơ chế tra cache, xử lý prompt và thử lại cơ bản khi parse JSON.
+- **Pipeline render liên ngôn ngữ** do `app.py` và `templates/index.html` phục vụ.
+- **Chuẩn hóa phiên âm tiếng Nhật** bằng cách chuyển dữ liệu katakana sang hiragana trước khi render.
+- **Cache trên đĩa** tại `cache/` cho các yêu cầu/đáp ứng dịch được tạo ra.
 
 ## 🗂️ Cấu trúc dự án
 
@@ -56,120 +67,131 @@ Kho lưu trữ hiện tại vận hành theo kiểu script (chưa được đón
 ├── cache/
 │   └── *.json
 ├── i18n/
-│   └── (currently empty)
+│   └── README.*.md
 └── *.ipynb
 ```
 
-## ✅ Điều kiện tiên quyết
+## ✅ Yêu cầu trước khi chạy
 
-Giả định (vì hiện chưa có lockfile hoặc dependency manifest được commit):
+- Python `3.10+`
+- `pip` cùng môi trường ảo hoạt động (`venv` được khuyên dùng)
+- Khóa API OpenAI (`OPENAI_API_KEY`) khi dùng các luồng tạo nội dung AI
+- Kết nối internet hoạt động để tải PDF và gọi API OpenAI
 
-- Python 3.10+ (nhiều khả năng chạy được trên các phiên bản lân cận; ma trận đã kiểm thử chính xác chưa được công bố).
-- `pip` và `venv`.
-- OpenAI API key cho các script dùng model.
+Vì repo này chưa có lockfile, các phụ thuộc được suy ra từ import và nội dung trước đó:
 
-Các dependency Python được suy ra từ import:
-
-| Package | Được dùng bởi |
+| Gói | Được dùng bởi |
 |---|---|
-| `tornado` | Web server trong `app.py` |
-| `openai` | API calls trong `openai_request.py` |
-| `PyPDF2` | PDF parsing trong các script trích xuất |
-| `requests` | PDF downloads trong `download_course_text.py` |
-| `beautifulsoup4` | HTML parsing trong downloader |
+| `tornado` | `app.py` |
+| `openai` | `openai_request.py`, `multilingual_sentence.py` |
+| `PyPDF2` | `pdf_to_csv.py`, `language_extraction.py` |
+| `requests` | `download_course_text.py` |
+| `beautifulsoup4` | `download_course_text.py` |
 
 ## 🛠️ Cài đặt
 
 ```bash
-# from repository root
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install tornado openai PyPDF2 requests beautifulsoup4
 ```
 
-## 🚀 Cách dùng
+| Gợi ý thiết lập | Lệnh |
+|---|---|
+| Kích hoạt venv | `source .venv/bin/activate` |
+| Tái tạo môi trường | `pip install tornado openai PyPDF2 requests beautifulsoup4` |
+| Chạy kiểm tra | `python -m pip check` |
 
-### 1) Tải các PDF nguồn
+## 🚀 Cách sử dụng
+
+Chạy các script theo đúng thứ tự sau cho pipeline chuẩn:
+
+### 1) Tải nguồn PDF
 
 ```bash
 python download_course_text.py
 ```
 
-Lệnh này tạo `downloaded_pdfs/` và lưu các PDF ngôn ngữ/unit vào đó.
+Tải PDF vào `downloaded_pdfs/`.
 
-### 2) Trích xuất nội dung PDF tiếng Nhật sang CSV
+### 2) Trích xuất nội dung PDF ra CSV
 
 ```bash
 python pdf_to_csv.py
 ```
 
-Đầu ra mặc định theo script hiện tại: `japanese_language_data.csv`.
+Mặc định tạo file `japanese_language_data.csv`.
 
-### 3) (Tùy chọn) Cắt văn bản section/page/sentence theo cách tương tác
+### 3) Kiểm tra một lát cắt PDF cụ thể (tùy chọn)
 
 ```bash
 python language_extraction.py
 ```
 
-Script chứa các biến ví dụ có thể chỉnh sửa (`level`, `section`, `sentence_num`) và in ra văn bản đã trích xuất.
+Hữu ích khi xác minh `level`, `section`, `page`, và `sentence_num` cụ thể trước khi tạo dataset quy mô lớn.
 
-### 4) Tạo JSON đa ngôn ngữ bằng luồng OpenAI
+### 4) Tạo payload câu đa ngôn ngữ (tùy chọn)
 
 ```bash
 python multilingual_sentence.py
 ```
 
-Ghi chú hành vi hiện tại:
+Ghi chú hành vi hiện tại để tăng độ tin cậy:
 
-- Chỉ xử lý dòng CSV đầu tiên (`break` trong vòng lặp).
-- Script hiện tham chiếu đến một biến chưa được định nghĩa (`japanese_text`) khi tạo prompt, nên cần sửa nhỏ trước khi dùng ổn định.
+- Phiên bản hiện tại chỉ xử lý đúng một hàng đầu tiên do `break` sớm.
+- Việc tạo prompt đang tham chiếu đến `japanese_text`, giá trị này hiện chưa nhất quán với biến hàng CSV đã trích xuất và có thể gây lỗi.
 
-### 5) Chạy ứng dụng web
+### 5) Khởi chạy web app
 
 ```bash
 python app.py
 ```
 
-- Tornado lắng nghe trên cổng `7788`.
-- Mở trên trình duyệt: `http://localhost:7788/`.
-- Lưu ý: log khởi động hiện in `http://localhost:8888` dù cổng bind là `7788`.
+- Cổng mặc định của Tornado: `7788`
+- URL: `http://localhost:7788/`
+- Sai lệch đã biết cần kiểm tra log: thông báo khởi động hiện tại đang tham chiếu `http://localhost:8888`.
 
 ## ⚙️ Cấu hình
 
-Biến môi trường:
+Các biến môi trường được script chạy ở runtime kỳ vọng:
 
-| Variable | Required | Mục đích | Mặc định hiện tại |
+| Biến | Bắt buộc | Mục đích | Mặc định |
 |---|---|---|---|
-| `OPENAI_API_KEY` | Yes | Bắt buộc cho khởi tạo client `OpenAI()` | N/A |
-| `OPENAI_MODEL` | No | Tùy chọn ghi đè chat model | `gpt-4-0125-preview` |
+| `OPENAI_API_KEY` | Có (chỉ luồng AI) | Xác thực OpenAI | N/A |
+| `OPENAI_MODEL` | Không | Ghi đè model trong request | `gpt-4-0125-preview` |
 
-Tệp/thư mục runtime:
+File/thư mục runtime:
 
-- `downloaded_pdfs/`: được tạo bởi downloader, dùng bởi các script trích xuất.
-- `cache/`: bộ nhớ đệm request/response cho các cuộc gọi OpenAI.
-- `translations.json`: nguồn dữ liệu để Tornado UI hiển thị.
+- `downloaded_pdfs/` — được `download_course_text.py` điền dữ liệu.
+- `cache/` — lưu payload prompt/response OpenAI đã cache.
+- `translations.json` — được Tornado UI sử dụng.
+- `templates/index.html` — template render trên trình duyệt.
 
-## 🧾 Ví dụ định dạng dữ liệu
+Giả định:
 
-### CSV (`japanese_language_data.csv`)
+- Thư mục gốc repository là nơi làm việc dự kiến cho tất cả script.
+- Cache dịch có thể được tái tạo an toàn khi đã cũ hoặc thiếu.
 
-Header được dùng bởi `pdf_to_csv.py`:
+## 🧾 Ví dụ
+
+### Định dạng CSV (`japanese_language_data.csv`)
 
 ```csv
 Level,Unit,Section,Sentence No.,Content
 ```
 
-### JSON (`translations.json`)
-
-Web UI mong đợi các khóa ngôn ngữ có mục `pairs` chứa `part` và `phonetic`:
+### Dạng payload dịch OpenAI (`translations.json`)
 
 ```json
 {
   "ja": {
     "full": "...",
     "pairs": [
-      { "part": "日", "phonetic": "ひ" }
+      {
+        "part": "日",
+        "phonetic": "ひ"
+      }
     ]
   },
   "en": { "full": "...", "pairs": [] },
@@ -179,49 +201,65 @@ Web UI mong đợi các khóa ngôn ngữ có mục `pairs` chứa `part` và `p
 }
 ```
 
+### Kiểm tra nhanh tối thiểu
+
+```bash
+python app.py
+python - <<'PY'
+import json
+with open('translations.json', encoding='utf-8') as f:
+    print('Loaded', len(json.load(f)), 'language keys')
+PY
+```
+
 ## 🧪 Ghi chú phát triển
 
-- Repo hiện chưa có `requirements.txt`, `pyproject.toml`, hoặc workflow CI.
-- Các script được thiết kế để chạy trực tiếp từ repository root.
-- Các notebook hiện có (`*.ipynb`) có vẻ thiên về khám phá/prototype.
-- Các artifact CSV lớn được version trực tiếp trong Git.
-- `i18n/` đã tồn tại và sẵn sàng cho các biến thể README đã dịch.
+- Dự án không được đóng gói (`requirements.txt`, `pyproject.toml` và CI không có).
+- Script-first: script được viết để chỉnh sửa và chạy lại trong quá trình lặp.
+- Các file notebook mang tính thăm dò và nên dùng như công cụ nghiên cứu, không phải pipeline production.
+- `i18n/README.*.md` đã có cho tài liệu đa ngôn ngữ, với block điều hướng ngôn ngữ cấp cao trong file này hoạt động như điểm vào chung.
 
 ## 🩺 Khắc phục sự cố
 
-- `ModuleNotFoundError`: cài các dependency suy ra trong virtual environment đang kích hoạt.
-- Lỗi auth `OPENAI`: đảm bảo `OPENAI_API_KEY` đã được export trong shell.
-- `FileNotFoundError: downloaded_pdfs`: chạy `python download_course_text.py` trước.
-- Lỗi `multilingual_sentence.py` tại `japanese_text`: thay `japanese_text` bằng `content` khi tạo prompt.
-- Nhầm cổng app: dùng `http://localhost:7788/` trừ khi `app.listen(...)` được thay đổi.
+- `ModuleNotFoundError`: cài đủ các package cần thiết trong môi trường ảo đang dùng.
+- Lỗi xác thực `OPENAI` / phản hồi rỗng: kiểm tra biến `OPENAI_API_KEY` đã được export trong shell.
+- `FileNotFoundError` cho `downloaded_pdfs`: chạy `python download_course_text.py` trước.
+- Vấn đề chuyển đổi OpenAI: kiểm tra `cache/*.json` và xác minh định dạng payload đầu vào mà `multilingual_sentence.py` kỳ vọng.
+- Nhầm lẫn URL ứng dụng: mở `http://localhost:7788/` sau khi khởi chạy.
 
 ## 🛣️ Lộ trình
 
-Các bước tiếp theo tiềm năng cho dự án:
-
-- Thêm dependency manifest (`requirements.txt` hoặc `pyproject.toml`).
-- Sửa biến prompt trong `multilingual_sentence.py` và bỏ `break` một dòng để xử lý theo lô.
-- Đồng bộ URL in khi khởi động Tornado với cổng bind.
-- Thêm test cho hành vi regex trích xuất PDF và logic phân tích/thử lại JSON.
-- Thêm tham số CLI cho ngôn ngữ/cấp độ/đường dẫn để giảm sửa trực tiếp trong file.
-- Điền các tệp README đã dịch vào `i18n/`.
+- Thêm manifest phụ thuộc (`requirements.txt` hoặc `pyproject.toml`) để cài đặt tái lập.
+- Xóa `break` xử lý một hàng trong `multilingual_sentence.py` và hỗ trợ sinh đa lô đầy đủ.
+- Sửa lỗi dùng biến trong prompt của `multilingual_sentence.py` và thêm validation đầu ra.
+- Sửa log URL khởi động của Tornado để khớp cổng `7788`.
+- Thêm các flag CLI (ngôn ngữ, cấp độ, đường dẫn nguồn, đường dẫn output).
+- Bổ sung test nhẹ cho extraction, retry/parse logic, và validate schema JSON.
+- Mở rộng tài liệu dành cho người đóng góp trong các biến thể ngôn ngữ của `i18n`.
 
 ## 🤝 Đóng góp
 
-Rất hoan nghênh đóng góp.
+Mọi đóng góp đều được chào đón.
 
 1. Fork repository.
-2. Tạo feature branch.
-3. Thực hiện thay đổi tập trung với commit message rõ ràng.
-4. Mở pull request mô tả những gì đã thay đổi và lý do.
+2. Tạo nhánh feature.
+3. Thực hiện thay đổi có trọng tâm và giữ quy trình script dễ tái tạo.
+4. Mở pull request với lý do rõ ràng và ghi chú hành vi trước/sau.
 
-Nếu bạn sửa logic trích xuất, hãy kèm các đoạn ví dụ input/output để việc review dễ hơn.
+Nếu bạn cập nhật logic trích xuất, hãy bao gồm dữ liệu đầu vào/đầu ra mẫu trong mô tả PR.
 
-## 🙏 Lời cảm ơn
+## 🙏 Ghi nhận
 
-- Các liên kết nội dung khóa học Rosetta Stone được nhúng trong `rs_html.py` và dùng làm tham chiếu nguồn để tải PDF.
-- OpenAI API được dùng cho việc tạo nội dung đa ngôn ngữ và cấu trúc ngữ âm.
+- Các liên kết nội dung khóa học Rosetta Stone trong `rs_html.py` là nguồn tham chiếu corpus PDF có thể tải về.
+- API OpenAI được dùng cho thử nghiệm tạo đa ngôn ngữ và gắn chú thích phiên âm.
 
 ## 📄 Giấy phép
 
-Dự án này được cấp phép theo Apache License 2.0. Xem [LICENSE](../LICENSE).
+Dự án này được cấp phép theo Apache License 2.0. Xem [LICENSE](LICENSE).
+
+
+## ❤️ Support
+
+| Donate | PayPal | Stripe |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |

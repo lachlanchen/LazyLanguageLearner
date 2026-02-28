@@ -1,8 +1,9 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
-# lazylanguagelearner
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
 
+# LazyLanguageLearner
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
@@ -10,27 +11,38 @@
 ![Web](https://img.shields.io/badge/Web-Tornado-5C2D91?logo=tornado)
 ![AI](https://img.shields.io/badge/OpenAI-API-10A37F?logo=openai&logoColor=white)
 
-Lerne Sprachen auf eine faule Art.
+| Attribut | Wert |
+|---|---|
+| Typ | Skriptgesteuerte mehrsprachige Sprachlernpipeline |
+| Laufzeit | Python CLI + Tornado-Web-App |
+| Hauptquelle | Rosetta Stone Kurs-PDFs |
+| Speicher | Lokale CSV- + JSON-Cache-Dateien |
+| Standardport | `7788` |
+
+LazyLanguageLearner ist ein skriptbasiertes Python-Workflow für die Umwandlung von Sprachkurs-PDFs in wiederverwendbare mehrsprachige Lerndaten mit der Darstellung in einer minimalistischen Web-Oberfläche.
 
 ## 🌍 Überblick
 
-LazyLanguageLearner ist ein Python-basierter Sprachlern-Workflow, der Folgendes kombiniert:
+Das Repository verbindet Extraktion, Transformation und Bereitstellung von Inhalten:
 
-- PDF-Beschaffung für Rosetta-Stone-Kursinhaltsdokumente.
-- PDF-Parsing und Satzextraktion in CSV-Datensätze.
-- OpenAI-gestützte mehrsprachige Satzkonvertierung mit Phonetik-Paaren und lokalem Festplatten-Cache.
-- Eine schlanke Tornado-Web-App, die mehrsprachigen Text mit Ruby-Phonetikannotationen rendert.
+| Schritt | Zweck |
+|---|---|
+| 1 | Lade Rosetta-Stone-Kurs-PDFs von Links aus `rs_html.py`. |
+| 2 | Parse PDFs in zeilenweise CSV-Datensätze auf Satzebene zur Weiterverarbeitung. |
+| 3 | Erzeuge mehrsprachige/phonetische Varianten über OpenAI mit On-Disk-Caching. |
+| 4 | Rendere die strukturierten Sätze mit phonetischer Annotation in einer Tornado-Web-UI. |
 
-Das aktuelle Repository ist skriptgetrieben (noch nicht als Pip-Modul paketiert), mit Datendateien und Notebooks direkt im Repo.
+Dieses Projekt ist bewusst leichtgewichtig und am Repository-Root verankert: Skripte sollen direkt aus dem Projektstamm ausgeführt werden und nicht als installiertes Paket.
 
-## ✨ Funktionen
+## ✨ Features
 
-- Lädt Sprachkurs-PDFs aus Links herunter, die in `rs_html.py` eingebettet sind (`download_course_text.py`).
-- Extrahiert Abschnitts-/Satzdaten aus PDFs in strukturierte CSV (`pdf_to_csv.py`, `language_extraction.py`).
-- Cached OpenAI-Prompt-/Response-Daten in `cache/*.json`, um wiederholte API-Nutzung zu reduzieren (`openai_request.py`).
-- Parst KI-Antworten in JSON mit Retry-Logik und benutzerdefinierten JSON-Parsing-Fehlern.
-- Stellt mehrsprachige Satzblöcke aus `translations.json` über Tornado bereit (`app.py` + `templates/index.html`).
-- Enthält japanische Phonetik-Normalisierung (`katakana` zu `hiragana`) vor dem Rendering.
+- **Automatisierter Download-Workflow** aus eingebetteten Links in `rs_html.py` mit `download_course_text.py`.
+- **Regex- + PDF-Extraktionspipeline** zur Sektionen-/Satzextraktion in `pdf_to_csv.py`.
+- **Selektive Extraktionswerkzeuge** für Level, Abschnitt, Seite und Satz-Inspektion in `language_extraction.py`.
+- **OpenAI-Anfrageschicht** (`openai_request.py`) mit Cache-Lookups, Prompt-Handling und einfachen Wiederholungen bei JSON-Parsing.
+- **Sprachübergreifende Rendering-Pipeline** bereitgestellt durch `app.py` und `templates/index.html`.
+- **Japanische phonetische Normalisierung**, die Katakana-Daten vor der Anzeige in Hiragana umwandelt.
+- **On-Disk-Caching** unter `cache/` für generierte Übersetzungsanfragen und Antworten.
 
 ## 🗂️ Projektstruktur
 
@@ -55,39 +67,45 @@ Das aktuelle Repository ist skriptgetrieben (noch nicht als Pip-Modul paketiert)
 ├── cache/
 │   └── *.json
 ├── i18n/
-│   └── (derzeit leer)
+│   └── README.*.md
 └── *.ipynb
 ```
 
 ## ✅ Voraussetzungen
 
-Annahmen (da derzeit kein Lockfile oder Dependency-Manifest eingecheckt ist):
+- Python `3.10+`
+- `pip` mit aktivierter virtueller Umgebung (`venv` empfohlen)
+- Ein OpenAI-API-Schlüssel (`OPENAI_API_KEY`) für KI-gestützte Generierung
+- Eine funktionierende Internetverbindung für PDF-Downloads und OpenAI-Anfragen
 
-- Python 3.10+ (funktioniert wahrscheinlich auch auf nahegelegenen Versionen; exakte getestete Matrix ist nicht deklariert).
-- `pip` und `venv`.
-- OpenAI-API-Key für modellgestützte Skripte.
+Da in diesem Repository kein Lockfile existiert, werden Abhängigkeiten aus Imports und bisherigem Inhalt abgeleitet:
 
-Aus Imports abgeleitete Python-Abhängigkeiten:
-
-| Package | Verwendet von |
+| Paket | Verwendet von |
 |---|---|
-| `tornado` | Webserver in `app.py` |
-| `openai` | API-Aufrufe in `openai_request.py` |
-| `PyPDF2` | PDF-Parsing in Extraktionsskripten |
-| `requests` | PDF-Downloads in `download_course_text.py` |
-| `beautifulsoup4` | HTML-Parsing im Downloader |
+| `tornado` | `app.py` |
+| `openai` | `openai_request.py`, `multilingual_sentence.py` |
+| `PyPDF2` | `pdf_to_csv.py`, `language_extraction.py` |
+| `requests` | `download_course_text.py` |
+| `beautifulsoup4` | `download_course_text.py` |
 
 ## 🛠️ Installation
 
 ```bash
-# from repository root
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install tornado openai PyPDF2 requests beautifulsoup4
 ```
 
-## 🚀 Verwendung
+| Setup-Hinweis | Befehl |
+|---|---|
+| venv aktivieren | `source .venv/bin/activate` |
+| Umgebung reproduzieren | `pip install tornado openai PyPDF2 requests beautifulsoup4` |
+| Checks ausführen | `python -m pip check` |
+
+## 🚀 Nutzung
+
+Führe die Skripte in dieser Reihenfolge für die Standard-Pipeline aus:
 
 ### 1) Quell-PDFs herunterladen
 
@@ -95,34 +113,34 @@ pip install tornado openai PyPDF2 requests beautifulsoup4
 python download_course_text.py
 ```
 
-Dies erstellt `downloaded_pdfs/` und speichert dort Sprach-/Unit-PDFs.
+Lädt PDFs in `downloaded_pdfs/`.
 
-### 2) Japanische PDF-Inhalte nach CSV extrahieren
+### 2) PDF-Inhalt in CSV extrahieren
 
 ```bash
 python pdf_to_csv.py
 ```
 
-Standardausgabe des aktuellen Skripts: `japanese_language_data.csv`.
+Erzeugt standardmäßig `japanese_language_data.csv`.
 
-### 3) (Optional) Abschnitts-/Seiten-/Satztext interaktiv zuschneiden
+### 3) Spezifischen PDF-Ausschnitt prüfen (optional)
 
 ```bash
 python language_extraction.py
 ```
 
-Das Skript enthält bearbeitbare Beispielvariablen (`level`, `section`, `sentence_num`) und gibt extrahierten Text aus.
+Hilfreich zur Validierung spezifischer `level`-, `section`-, `page`- und `sentence_num`-Pfadwerte, bevor größere Datensätze erzeugt werden.
 
-### 4) Mehrsprachiges JSON mit OpenAI-Flow generieren
+### 4) Mehrsprachige Satz-Payloads erstellen (optional)
 
 ```bash
 python multilingual_sentence.py
 ```
 
-Hinweise zum aktuellen Verhalten:
+Aktuelle Verhaltenshinweise für Zuverlässigkeit:
 
-- Es wird nur die erste CSV-Zeile verarbeitet (`break` in der Schleife).
-- Das Skript referenziert derzeit eine undefinierte Variable (`japanese_text`) bei der Prompt-Erstellung und braucht daher vor zuverlässiger Nutzung einen kleinen Fix.
+- Die aktuelle Version verarbeitet wegen eines frühen `break` nur die erste Zeile.
+- Die Prompt-Erzeugung verweist auf `japanese_text`, was derzeit inkonsistent mit der extrahierten CSV-Zeilenvariable zu sein scheint und fehlschlagen kann.
 
 ### 5) Die Web-App starten
 
@@ -130,45 +148,50 @@ Hinweise zum aktuellen Verhalten:
 python app.py
 ```
 
-- Tornado lauscht auf Port `7788`.
-- Im Browser öffnen: `http://localhost:7788/`.
-- Hinweis: Das Start-Log gibt derzeit `http://localhost:8888` aus, obwohl gebunden auf `7788`.
+- Standard-Tornado-Port: `7788`
+- URL: `http://localhost:7788/`
+- Bekannte Abweichung in den Logs: Die Startmeldung verweist aktuell auf `http://localhost:8888`.
 
 ## ⚙️ Konfiguration
 
-Umgebungsvariablen:
+Umgebungsvariablen, die von den Runtime-Skripten erwartet werden:
 
-| Variable | Erforderlich | Zweck | Aktueller Standard |
+| Variable | Erforderlich | Zweck | Standard |
 |---|---|---|---|
-| `OPENAI_API_KEY` | Ja | Erforderlich für `OpenAI()`-Client-Initialisierung | N/A |
-| `OPENAI_MODEL` | Nein | Optionales Override für das Chat-Modell | `gpt-4-0125-preview` |
+| `OPENAI_API_KEY` | Ja (nur KI-Flow) | OpenAI-Authentifizierung | N/A |
+| `OPENAI_MODEL` | Nein | Modell-Override in Anfragen | `gpt-4-0125-preview` |
 
-Laufzeitdateien/-verzeichnisse:
+Runtime-Dateien/-Verzeichnisse:
 
-- `downloaded_pdfs/`: vom Downloader erstellt, von Extraktionsskripten verwendet.
-- `cache/`: Request-/Response-Cache für OpenAI-Aufrufe.
-- `translations.json`: Datenquelle für Tornado-UI-Rendering.
+- `downloaded_pdfs/` — gefüllt durch `download_course_text.py`.
+- `cache/` — speichert gecachte OpenAI-Prompt-/Response-Payloads.
+- `translations.json` — wird von der Tornado-UI verwendet.
+- `templates/index.html` — Browser-Render-Template.
 
-## 🧾 Datenformat-Beispiele
+Annahmen:
 
-### CSV (`japanese_language_data.csv`)
+- Das Repository-Root ist das vorgesehene Arbeitsverzeichnis für alle Skripte.
+- Der Übersetzungs-Cache kann bei Veralterung oder Fehlen sicher neu generiert werden.
 
-Von `pdf_to_csv.py` verwendeter Header:
+## 🧾 Beispiele
+
+### CSV-Format (`japanese_language_data.csv`)
 
 ```csv
 Level,Unit,Section,Sentence No.,Content
 ```
 
-### JSON (`translations.json`)
-
-Die Web-UI erwartet Sprachschlüssel mit `pairs`-Einträgen, die `part` und `phonetic` enthalten:
+### OpenAI-Übersetzungspayload-Format (`translations.json`)
 
 ```json
 {
   "ja": {
     "full": "...",
     "pairs": [
-      { "part": "日", "phonetic": "ひ" }
+      {
+        "part": "日",
+        "phonetic": "ひ"
+      }
     ]
   },
   "en": { "full": "...", "pairs": [] },
@@ -178,49 +201,54 @@ Die Web-UI erwartet Sprachschlüssel mit `pairs`-Einträgen, die `part` und `pho
 }
 ```
 
+### Minimaler Schnellcheck
+
+```bash
+python app.py
+python - <<'PY'
+import json
+with open('translations.json', encoding='utf-8') as f:
+    print('Loaded', len(json.load(f)), 'language keys')
+PY
+```
+
 ## 🧪 Entwicklungshinweise
 
-- Dieses Repo hat derzeit kein `requirements.txt`, `pyproject.toml` oder CI-Workflow.
-- Skripte sind für die direkte Ausführung vom Repository-Root ausgelegt.
-- Bestehende Notebooks (`*.ipynb`) wirken explorativ/prototyping-orientiert.
-- Große CSV-Artefakte sind direkt in Git versioniert.
-- `i18n/` existiert und ist bereit für übersetzte README-Varianten.
-
-## 🩺 Fehlerbehebung
-
-- `ModuleNotFoundError`: aus Imports abgeleitete Abhängigkeiten in der aktiven virtuellen Umgebung installieren.
-- `OPENAI`-Auth-Fehler: sicherstellen, dass `OPENAI_API_KEY` in der Shell exportiert ist.
-- `FileNotFoundError: downloaded_pdfs`: zuerst `python download_course_text.py` ausführen.
-- `multilingual_sentence.py`-Fehler bei `japanese_text`: `japanese_text` in der Prompt-Konstruktion durch `content` ersetzen.
-- Verwirrung um App-Port: `http://localhost:7788/` verwenden, sofern `app.listen(...)` nicht geändert wird.
+- Das Projekt ist nicht paketiert (`requirements.txt`, `pyproject.toml` und CI sind nicht vorhanden).
+- Skripte sind script-first ausgelegt und sollen während der Iteration bearbeitet und erneut ausgeführt werden.
+- Notebook-Dateien sind explorativ und sollten als Forschungshilfen und nicht als Produktionspipelines betrachtet werden.
+- `i18n/README.*.md` existiert bereits für mehrsprachige Dokumentation; in dieser Datei dient der Sprach-Navigationsblock auf oberster Ebene als gemeinsamer Einstiegspunkt.
 
 ## 🛣️ Roadmap
 
-Mögliche nächste Schritte für das Projekt:
-
-- Dependency-Manifest hinzufügen (`requirements.txt` oder `pyproject.toml`).
-- Prompt-Variable in `multilingual_sentence.py` korrigieren und den Ein-Zeilen-`break` für Batch-Verarbeitung entfernen.
-- Tornado-Startup-Print-URL mit gebundenem Port angleichen.
-- Tests für PDF-Extraktions-Regex-Verhalten und JSON-Parsing-/Retry-Logik hinzufügen.
-- CLI-Argumente für Sprache/Level/Pfade hinzufügen, um In-File-Bearbeitungen zu reduzieren.
-- `i18n/` mit übersetzten README-Dateien füllen.
+- Füge ein Abhängigkeitsmanifest (`requirements.txt` oder `pyproject.toml`) für reproduzierbare Installationen hinzu.
+- Entferne das Ein-Zeilen-`break` aus `multilingual_sentence.py` und unterstütze die vollständige Batch-Mehrsprachigkeit.
+- Korrigiere die Prompt-Variablenverwendung in `multilingual_sentence.py` und füge eine Ausgabevalidierung hinzu.
+- Korrigiere das Tornado-Startup-URL-Log auf Port `7788`.
+- Ergänze CLI-Flags (Sprache, Level, Quellpfade, Ausgabeziel).
+- Führe leichte Tests für Extraktion, Wiederhol-/Parse-Logik und JSON-Schema-Validierung ein.
+- Erweitere mitarbeiterorientierte Dokumentation in den Sprachvarianten unter `i18n`.
 
 ## 🤝 Beitragen
 
 Beiträge sind willkommen.
 
-1. Repository forken.
-2. Feature-Branch erstellen.
-3. Fokussierte Änderungen mit klaren Commit-Messages vornehmen.
-4. Pull Request öffnen, der beschreibt, was geändert wurde und warum.
+1. Forke das Repository.
+2. Erstelle einen Feature-Branch.
+3. Nimm eine fokussierte Änderung vor und halte die Skript-Workflows gut reproduzierbar.
+4. Eröffne einen Pull Request mit klarer Begründung und Vorher-/Nachher-Verhaltensbeschreibung.
 
-Wenn du die Extraktionslogik änderst, füge Beispiel-Input/Output-Snippets hinzu, damit das Review einfacher wird.
+Wenn du Extraktionslogik aktualisierst, füge Beispiel-Eingaben und -Ausgaben in deine PR-Beschreibung ein.
 
-## 🙏 Danksagungen
+## 🙏 Danksagung
 
-- Rosetta-Stone-Kursinhaltslinks sind in `rs_html.py` eingebettet und werden als Quellreferenzen für PDF-Downloads verwendet.
-- Die OpenAI API wird für mehrsprachige Generierung und Phonetik-Strukturierung genutzt.
+- Rosetta Stone Kursinhalts-Links in `rs_html.py` sind die Quelle für die herunterladbaren PDF-Korpus-Referenzen.
+- OpenAI-APIs werden für mehrsprachige Generierung und phonetische Annotations-Experimente verwendet.
 
-## 📄 Lizenz
 
-Dieses Projekt ist unter der Apache License 2.0 lizenziert. Siehe [LICENSE](LICENSE).
+
+## ❤️ Support
+
+| Donate | PayPal | Stripe |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |

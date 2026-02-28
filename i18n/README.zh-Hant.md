@@ -1,7 +1,9 @@
 [English](../README.md) · [العربية](README.ar.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Tiếng Việt](README.vi.md) · [中文 (简体)](README.zh-Hans.md) · [中文（繁體）](README.zh-Hant.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
 
-# lazylanguagelearner
+[![LazyingArt banner](https://github.com/lachlanchen/lachlanchen/raw/main/figs/banner.png)](https://github.com/lachlanchen/lachlanchen/blob/main/figs/banner.png)
+
+# LazyLanguageLearner
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
@@ -9,27 +11,38 @@
 ![Web](https://img.shields.io/badge/Web-Tornado-5C2D91?logo=tornado)
 ![AI](https://img.shields.io/badge/OpenAI-API-10A37F?logo=openai&logoColor=white)
 
-用懶人的方式學語言。
+| 屬性 | 值 |
+|---|---|
+| 類型 | 以腳本為核心的多語言學習流程 |
+| 執行環境 | Python CLI + Tornado 網頁應用 |
+| 主要來源 | Rosetta Stone 課程 PDF |
+| 儲存方式 | 本機 CSV + JSON 快取檔案 |
+| 預設埠號 | `7788` |
+
+LazyLanguageLearner 是一個以腳本為核心的 Python 工作流程，將語言課程 PDF 轉成可重複使用的多語學習資料，並透過精簡的網頁介面呈現。
 
 ## 🌍 概覽
 
-LazyLanguageLearner 是一個以 Python 為基礎的語言學習工作流程，結合了：
+本專案整合了內容提取、轉換與服務輸出：
 
-- 取得 Rosetta Stone 課程內容文件的 PDF。
-- 將 PDF 解析並擷取句子為 CSV 資料集。
-- 使用 OpenAI 進行多語句子轉換、產生讀音配對（phonetic pairs），並提供本機磁碟快取。
-- 輕量 Tornado Web 應用，渲染帶有 ruby 讀音註解的多語文字。
+| 步驟 | 目的 |
+|---|---|
+| 1 | 從 `rs_html.py` 內嵌的連結下載 Rosetta Stone 的課程 PDF。 |
+| 2 | 將 PDF 解析為逐句 CSV 列，供後續轉換使用。 |
+| 3 | 透過 OpenAI 產生多語言／音標變體並快取到本機。 |
+| 4 | 以 Tornado 網頁介面渲染結構化句子並附帶音標註記。 |
 
-目前此儲存庫以腳本驅動為主（尚未打包成 pip 模組），資料檔與筆記本直接包含在 repo 內。
+此專案刻意保持輕量且以專案根目錄為主：腳本設計上應直接在 repo 根目錄執行，而非作為已安裝套件。
 
 ## ✨ 功能
 
-- 從 `rs_html.py` 內嵌連結下載語言課程 PDF（`download_course_text.py`）。
-- 將 PDF 的章節/句子資料擷取為結構化 CSV（`pdf_to_csv.py`、`language_extraction.py`）。
-- 將 OpenAI prompt/response 資料快取到 `cache/*.json`，降低重複 API 使用（`openai_request.py`）。
-- 將 AI 回應解析為 JSON，包含重試邏輯與自訂 JSON 解析錯誤。
-- 透過 Tornado 從 `translations.json` 提供多語句子區塊（`app.py` + `templates/index.html`）。
-- 在渲染前包含日文讀音正規化（`katakana` 轉 `hiragana`）。
+- **自動下載流程**：使用 `download_course_text.py` 從 `rs_html.py` 的內嵌連結下載課程內容。
+- **Regex + PDF 提取管線**：`pdf_to_csv.py` 提供段落與句子擷取能力。
+- **選擇式提取工具**：`language_extraction.py` 支援等級、章節、頁碼與句子檢查。
+- **OpenAI 請求層** (`openai_request.py`)：含快取查詢、提示詞處理與基本 JSON 重試擷取。
+- **跨語言渲染管線**：由 `app.py` 與 `templates/index.html` 服務。
+- **日語音標正規化**：在渲染前將片假名資料轉換為平假名。
+- **本機快取**：`cache/` 目錄儲存已生成的翻譯請求與回應。
 
 ## 🗂️ 專案結構
 
@@ -54,120 +67,131 @@ LazyLanguageLearner 是一個以 Python 為基礎的語言學習工作流程，�
 ├── cache/
 │   └── *.json
 ├── i18n/
-│   └── (currently empty)
+│   └── README.*.md
 └── *.ipynb
 ```
 
 ## ✅ 先決條件
 
-前提假設（因目前尚未提交 lockfile 或相依清單）：
+- Python `3.10+`
+- `pip` 與啟用中的虛擬環境（建議使用 `venv`）
+- 使用 AI 生成功能時需提供 OpenAI API 金鑰（`OPENAI_API_KEY`）
+- 下載 PDF 與 OpenAI 請求時需要可用的網路連線
 
-- Python 3.10+（鄰近版本可能可用；未宣告精確測試矩陣）。
-- `pip` 與 `venv`。
-- 需有 OpenAI API key 才能執行模型相關腳本。
+本專案沒有 lockfile，故依照匯入模組與既有內容推斷相依套件：
 
-從 import 推斷的 Python 相依套件：
-
-| Package | Used by |
+| 套件 | 用途 |
 |---|---|
-| `tornado` | `app.py` 中的 Web server |
-| `openai` | `openai_request.py` 中的 API 呼叫 |
-| `PyPDF2` | 擷取腳本中的 PDF 解析 |
-| `requests` | `download_course_text.py` 中的 PDF 下載 |
-| `beautifulsoup4` | 下載器中的 HTML 解析 |
+| `tornado` | `app.py` |
+| `openai` | `openai_request.py`、`multilingual_sentence.py` |
+| `PyPDF2` | `pdf_to_csv.py`、`language_extraction.py` |
+| `requests` | `download_course_text.py` |
+| `beautifulsoup4` | `download_course_text.py` |
 
 ## 🛠️ 安裝
 
 ```bash
-# from repository root
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install tornado openai PyPDF2 requests beautifulsoup4
 ```
 
+| 設定提示 | 指令 |
+|---|---|
+| 啟用虛擬環境 | `source .venv/bin/activate` |
+| 重建環境 | `pip install tornado openai PyPDF2 requests beautifulsoup4` |
+| 執行檢查 | `python -m pip check` |
+
 ## 🚀 使用方式
 
-### 1) 下載來源 PDF
+請依下列順序執行腳本以完成標準流程：
+
+### 1) 下載原始 PDF
 
 ```bash
 python download_course_text.py
 ```
 
-此步驟會建立 `downloaded_pdfs/`，並將語言/單元 PDF 儲存至該目錄。
+將 PDF 下載到 `downloaded_pdfs/`。
 
-### 2) 將日文 PDF 內容擷取到 CSV
+### 2) 將 PDF 轉為 CSV
 
 ```bash
 python pdf_to_csv.py
 ```
 
-目前腳本的預設輸出：`japanese_language_data.csv`。
+預設輸出 `japanese_language_data.csv`。
 
-### 3) （可選）互動式切分章節/頁面/句子文字
+### 3) 檢視特定 PDF 片段（可選）
 
 ```bash
 python language_extraction.py
 ```
 
-腳本內含可編輯範例變數（`level`、`section`、`sentence_num`），並會印出擷取文字。
+在進行大規模資料生成前，用以驗證指定的 `level`、`section`、`page` 與 `sentence_num`。
 
-### 4) 使用 OpenAI 流程產生多語 JSON
+### 4) 建立多語句子 payload（可選）
 
 ```bash
 python multilingual_sentence.py
 ```
 
-目前行為說明：
+目前的穩定性備註：
 
-- 僅處理 CSV 第一列（迴圈中有 `break`）。
-- 腳本目前在建立 prompt 時參照了未定義變數（`japanese_text`），在可靠使用前需要小幅修正。
+- 目前版本因提前 `break` 的關係僅會處理第一列資料。
+- 提示詞產生時引用 `japanese_text`，目前與已解析 CSV 的列變數不一致，可能導致失敗。
 
-### 5) 執行 Web 應用
+### 5) 啟動網頁應用
 
 ```bash
 python app.py
 ```
 
-- Tornado 監聽埠 `7788`。
-- 瀏覽器開啟：`http://localhost:7788/`。
-- 注意：啟動日誌目前會印出 `http://localhost:8888`，但實際綁定是 `7788`。
+- 預設 Tornado 連線埠：`7788`
+- URL：`http://localhost:7788/`
+- 記錄輸出中的已知不一致：啟動訊息目前仍會顯示 `http://localhost:8888`，請以實際啟動為準。
 
 ## ⚙️ 設定
 
-環境變數：
+執行腳本時預期的環境變數：
 
-| Variable | Required | Purpose | Current default |
+| 變數 | 必要 | 用途 | 預設值 |
 |---|---|---|---|
-| `OPENAI_API_KEY` | Yes | `OpenAI()` client 初始化必需 | N/A |
-| `OPENAI_MODEL` | No | 可選覆寫 chat model | `gpt-4-0125-preview` |
+| `OPENAI_API_KEY` | 是（僅 AI 流程） | OpenAI 驗證 | N/A |
+| `OPENAI_MODEL` | 否 | 覆寫請求中的模型 | `gpt-4-0125-preview` |
 
-執行期檔案/目錄：
+執行時的檔案與資料夾：
 
-- `downloaded_pdfs/`：由下載器建立，供擷取腳本使用。
-- `cache/`：OpenAI 呼叫的 request/response 快取。
-- `translations.json`：Tornado UI 渲染資料來源。
+- `downloaded_pdfs/`：由 `download_course_text.py` 建立。
+- `cache/`：儲存 OpenAI 請求／回應快取。
+- `translations.json`：由 Tornado UI 使用。
+- `templates/index.html`：瀏覽器端渲染模板。
 
-## 🧾 資料格式範例
+前提條件：
 
-### CSV (`japanese_language_data.csv`)
+- 專案根目錄是所有腳本的預期工作目錄。
+- 翻譯快取若遺失或過期，建議安全地重建。
 
-`pdf_to_csv.py` 使用的標頭：
+## 🧾 範例
+
+### CSV 格式（`japanese_language_data.csv`）
 
 ```csv
 Level,Unit,Section,Sentence No.,Content
 ```
 
-### JSON (`translations.json`)
-
-Web UI 預期語言鍵包含 `pairs` 項目，每項帶有 `part` 與 `phonetic`：
+### OpenAI 翻譯 payload 結構（`translations.json`）
 
 ```json
 {
   "ja": {
     "full": "...",
     "pairs": [
-      { "part": "日", "phonetic": "ひ" }
+      {
+        "part": "日",
+        "phonetic": "ひ"
+      }
     ]
   },
   "en": { "full": "...", "pairs": [] },
@@ -177,49 +201,62 @@ Web UI 預期語言鍵包含 `pairs` 項目，每項帶有 `part` 與 `phonetic`
 }
 ```
 
+### 最小快速檢查
+
+```bash
+python app.py
+python - <<'PY'
+import json
+with open('translations.json', encoding='utf-8') as f:
+    print('Loaded', len(json.load(f)), 'language keys')
+PY
+```
+
 ## 🧪 開發備註
 
-- 此 repo 目前沒有 `requirements.txt`、`pyproject.toml` 或 CI workflow。
-- 腳本設計為直接從 repository root 執行。
-- 既有筆記本（`*.ipynb`）看起來偏向探索/原型用途。
-- 大型 CSV 產物直接版本控管於 Git。
-- `i18n/` 已存在，可用於放置翻譯版 README。
+- 本專案未打包（未提供 `requirements.txt`、`pyproject.toml`，亦未配置 CI）。
+- 腳本是第一優先，應在迭代過程中直接編輯並重跑。
+- Notebook 檔案多為探索用途，應僅作為研究輔助，不建議作為正式管線。
+- `i18n/README.*.md` 目前已存在多語文件，且本檔案最上方的語系導覽列作為共用入口。
 
 ## 🩺 疑難排解
 
-- `ModuleNotFoundError`：在啟用中的虛擬環境安裝推斷相依套件。
-- `OPENAI` 驗證錯誤：確認已在 shell 匯出 `OPENAI_API_KEY`。
-- `FileNotFoundError: downloaded_pdfs`：先執行 `python download_course_text.py`。
-- `multilingual_sentence.py` 在 `japanese_text` 失敗：將 prompt 建構中的 `japanese_text` 改為 `content`。
-- 埠號混淆：除非你修改 `app.listen(...)`，否則使用 `http://localhost:7788/`。
+- `ModuleNotFoundError`：請先在啟用的虛擬環境中安裝所有必要套件。
+- `OPENAI` 認證錯誤／空回應：請確認 `OPENAI_API_KEY` 已在 shell 中輸出為環境變數。
+- `downloaded_pdfs` 找不到：先執行 `python download_course_text.py`。
+- OpenAI 轉換問題：檢查 `cache/*.json`，並確認輸入 payload 格式符合 `multilingual_sentence.py` 的預期。
+- 網址混淆：啟動後請以 `http://localhost:7788/` 存取。
 
 ## 🛣️ 路線圖
 
-專案可能的下一步：
+- 新增相依套件清單（`requirements.txt` 或 `pyproject.toml`）以讓安裝可重現。
+- 移除 `multilingual_sentence.py` 中只處理一列的 `break`，並支援完整批次多語生成。
+- 修正 `multilingual_sentence.py` 的提示變數使用，並新增輸出驗證。
+- 修正 Tornado 啟動 URL log，使其對應埠號 `7788`。
+- 加入 CLI 參數（語言、等級、來源路徑、輸出路徑）。
+- 增加輕量測試，覆蓋提取、重試/解析邏輯與 JSON schema 驗證。
+- 擴充 `i18n` 多語文件、優化貢獻者導向說明。
 
-- 新增相依清單（`requirements.txt` 或 `pyproject.toml`）。
-- 修正 `multilingual_sentence.py` 的 prompt 變數，並移除僅一列處理的 `break` 以支援批次。
-- 讓 Tornado 啟動時印出的 URL 與實際綁定埠一致。
-- 為 PDF 擷取正則行為與 JSON 解析/重試邏輯新增測試。
-- 新增語言/等級/路徑的 CLI 參數，減少檔內手動編輯。
-- 在 `i18n/` 補齊更多翻譯版 README 檔。
+## 🤝 貢獻指南
 
-## 🤝 貢獻
+歡迎任何形式的貢獻。
 
-歡迎貢獻。
+1. Fork 本儲存庫。
+2. 建立一個功能分支。
+3. 聚焦修改內容並保持腳本流程可重現。
+4. 開啟 Pull Request，並清楚說明改動原因與前後行為差異。
 
-1. Fork 此儲存庫。
-2. 建立功能分支。
-3. 進行聚焦變更並撰寫清楚的 commit 訊息。
-4. 開啟 pull request，說明變更內容與原因。
-
-若你修改擷取邏輯，請附上範例輸入/輸出片段，讓審查更容易。
+若你更新了抽取邏輯，請在 PR 說明中包含輸入/輸出範例。
 
 ## 🙏 致謝
 
-- Rosetta Stone 課程內容連結內嵌於 `rs_html.py`，並作為 PDF 下載來源參考。
-- OpenAI API 用於多語生成與讀音結構化。
+- `rs_html.py` 中的 Rosetta Stone 課程內容連結提供可下載 PDF 的語料來源。
+- OpenAI API 用於多語生成與音標註記實驗。
 
-## 📄 授權
 
-本專案採用 Apache License 2.0。詳見 [LICENSE](LICENSE)。
+
+## ❤️ Support
+
+| Donate | PayPal | Stripe |
+| --- | --- | --- |
+| [![Donate](https://camo.githubusercontent.com/24a4914f0b42c6f435f9e101621f1e52535b02c225764b2f6cc99416926004b7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4c617a79696e674172742d3045413545393f7374796c653d666f722d7468652d6261646765266c6f676f3d6b6f2d6669266c6f676f436f6c6f723d7768697465)](https://chat.lazying.art/donate) | [![PayPal](https://camo.githubusercontent.com/d0f57e8b016517a4b06961b24d0ca87d62fdba16e18bbdb6aba28e978dc0ea21/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f50617950616c2d526f6e677a686f754368656e2d3030343537433f7374796c653d666f722d7468652d6261646765266c6f676f3d70617970616c266c6f676f436f6c6f723d7768697465)](https://paypal.me/RongzhouChen) | [![Stripe](https://camo.githubusercontent.com/1152dfe04b6943afe3a8d2953676749603fb9f95e24088c92c97a01a897b4942/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374726970652d446f6e6174652d3633354246463f7374796c653d666f722d7468652d6261646765266c6f676f3d737472697065266c6f676f436f6c6f723d7768697465)](https://buy.stripe.com/aFadR8gIaflgfQV6T4fw400) |
